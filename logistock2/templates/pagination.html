@@ -1,0 +1,25 @@
+{% if page.paginator.num_pages > 1 %}
+<nav aria-label="Pagination" class="mt-3">
+    <ul class="pagination justify-content-center flex-wrap mb-0">
+        {% if page.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page.previous_page_number }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if categorie_id %}&amp;categorie={{ categorie_id|urlencode }}{% endif %}{% if type_choisi %}&amp;type={{ type_choisi|urlencode }}{% endif %}{% if etat %}&amp;etat={{ etat|urlencode }}{% endif %}">Précédent</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Précédent</span></li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ page.number }} sur {{ page.paginator.num_pages }}</span>
+        </li>
+
+        {% if page.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page.next_page_number }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if categorie_id %}&amp;categorie={{ categorie_id|urlencode }}{% endif %}{% if type_choisi %}&amp;type={{ type_choisi|urlencode }}{% endif %}{% if etat %}&amp;etat={{ etat|urlencode }}{% endif %}">Suivant</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Suivant</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}

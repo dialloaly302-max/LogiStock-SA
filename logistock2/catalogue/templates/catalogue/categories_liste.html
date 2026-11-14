@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block titre %}Catégories{% endblock %}
+
+{% block contenu %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Catégories</h1>
+    {% if peut_gerer %}
+        <a class="btn btn-primary" href="{% url 'creer_categorie' %}">+ Ajouter une catégorie</a>
+    {% endif %}
+</div>
+
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="search" name="q" value="{{ q }}" class="form-control"
+               placeholder="Rechercher une catégorie">
+        <button class="btn btn-primary" type="submit">Rechercher</button>
+        {% if q %}
+            <a class="btn btn-outline-secondary" href="{% url 'liste_categories' %}">Effacer</a>
+        {% endif %}
+    </div>
+</form>
+
+<p class="text-muted mb-2">{{ page.paginator.count }} catégorie(s)</p>
+
+<div class="carte p-0">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover tableau mb-0">
+            <thead>
+                <tr>
+                    <th>Nom de la catégorie</th>
+                    <th>Nombre de produits</th>
+                    {% if peut_gerer %}<th class="text-end">Actions</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in page %}
+                <tr>
+                    <td><strong>{{ c.nom_categorie }}</strong></td>
+                    <td>{{ c.nb }}</td>
+                    {% if peut_gerer %}
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-primary"
+                           href="{% url 'modifier_categorie' c.pk %}">Modifier</a>
+                        <form method="post" action="{% url 'supprimer_categorie' c.pk %}"
+                              class="d-inline"
+                              onsubmit="return confirm('Supprimer cette catégorie ?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center py-4">Aucune catégorie trouvée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include "pagination.html" %}
+{% endblock %}

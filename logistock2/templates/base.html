@@ -1,0 +1,72 @@
+{% load static logistock_filtres %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block titre %}Accueil{% endblock %} | LogiStock SA</title>
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/logistock.css' %}">
+    {% block style %}{% endblock %}
+</head>
+<body>
+<div class="application">
+
+    <!-- Barre latérale fixe : ordinateur -->
+    <aside class="barre-laterale barre-bureau d-none d-lg-flex">
+        {% include "menu_lateral.html" %}
+    </aside>
+
+    <!-- Menu qui glisse : téléphone -->
+    <div class="offcanvas offcanvas-start barre-laterale d-lg-none"
+         tabindex="-1" id="menuMobile">
+        <div class="text-end">
+            <button type="button" class="btn-close btn-close-white"
+                    data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+        </div>
+        {% include "menu_lateral.html" %}
+    </div>
+
+    <div class="contenu-principal">
+
+        <!-- Barre du haut : bouton hamburger, nom, rôle, déconnexion -->
+        <header class="barre-haute">
+            <button class="btn btn-outline-secondary d-lg-none" type="button"
+                    data-bs-toggle="offcanvas" data-bs-target="#menuMobile"
+                    aria-controls="menuMobile">&#9776; Menu</button>
+
+            {% if user.is_authenticated %}
+            <div class="utilisateur-info">
+                <div class="utilisateur-texte d-none d-sm-block">
+                    <div class="utilisateur-nom">{{ user.nom }} {{ user.prenom|default:"" }}</div>
+                                        <div class="utilisateur-role">{{ user.role|role_lisible }}</div>                </div>
+                <form method="post" action="{% url 'deconnexion' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger">Déconnexion</button>
+                </form>
+            </div>
+            {% endif %}
+        </header>
+
+        <!-- Contenu de la page -->
+        <main class="page">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{% if message.level_tag == 'error' %}danger{% else %}{{ message.level_tag }}{% endif %} alert-dismissible fade show"
+                     role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                            aria-label="Fermer"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block contenu %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

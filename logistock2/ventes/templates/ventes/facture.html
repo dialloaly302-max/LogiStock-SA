@@ -1,0 +1,155 @@
+{% load logistock_filtres %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Facture {{ vente.reference }} | LogiStock SA</title>
+    <style>
+        @page { size: A4; margin: 15mm; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; background: #e5e7eb; color: #111827;
+            font-family: Arial, Helvetica, sans-serif; font-size: 11pt;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        }
+
+        /* ---- Barre d'outils : visible à l'écran, jamais imprimée ---- */
+        .barre-outils {
+            position: sticky; top: 0; z-index: 10; display: flex;
+            flex-wrap: wrap; gap: 10px; padding: 10px 15px; background: #1E3A5F;
+        }
+        .barre-outils button, .barre-outils a {
+            padding: 9px 18px; border: 0; border-radius: 8px; cursor: pointer;
+            font-size: 11pt; font-weight: bold; text-decoration: none;
+        }
+        .bouton-imprimer { background: #16A34A; color: #fff; }
+        .bouton-autre { background: #fff; color: #1E3A5F; }
+
+        /* ---- La feuille A4 ---- */
+        .feuille {
+            width: 210mm; min-height: 297mm; margin: 10mm auto; padding: 15mm;
+            background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
+        }
+        .entete {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            gap: 10mm; padding-bottom: 6mm; border-bottom: 3px solid #1E3A5F;
+        }
+        .societe { font-size: 22pt; font-weight: bold; color: #1E3A5F; }
+        .sous-titre { color: #6B7280; font-size: 10pt; }
+        .titre-facture { text-align: right; }
+        .titre-facture .mot { font-size: 20pt; font-weight: bold; color: #2563EB; }
+        .titre-facture .numero { font-size: 14pt; font-weight: bold; }
+
+        .infos { display: flex; gap: 10mm; margin: 8mm 0; }
+        .bloc { flex: 1; padding: 4mm; background: #F3F4F6; border-radius: 3mm; }
+        .etiquette { font-size: 9pt; text-transform: uppercase; color: #6B7280; }
+        .gras { font-size: 13pt; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead { display: table-header-group; }
+        tr { page-break-inside: avoid; }
+        th {
+            background: #1E3A5F; color: #fff; padding: 3mm; text-align: left;
+            font-size: 10pt;
+        }
+        td { padding: 3mm; border-bottom: 1px solid #D1D5DB; }
+        .droite { text-align: right; white-space: nowrap; }
+        .centre { text-align: center; }
+
+        .totaux { width: 90mm; margin: 6mm 0 0 auto; }
+        .totaux .ligne { display: flex; justify-content: space-between; padding: 2mm 0; }
+        .totaux .total {
+            margin-top: 2mm; padding-top: 3mm; border-top: 2px solid #1E3A5F;
+            font-size: 15pt; font-weight: bold;
+        }
+        .pied {
+            margin-top: 20mm; padding-top: 4mm; border-top: 1px solid #D1D5DB;
+            text-align: center; color: #6B7280; font-size: 9pt;
+        }
+
+        /* ---- Petit écran (téléphone) ---- */
+        @media screen and (max-width: 230mm) {
+            .feuille { width: auto; min-height: 0; margin: 0; padding: 6mm; }
+            .entete, .infos { flex-direction: column; }
+            .titre-facture { text-align: left; }
+            .totaux { width: 100%; }
+        }
+
+        /* ---- Impression : on enlève tout ce qui n'est pas la facture ---- */
+        @media print {
+            body { background: #fff; }
+            .barre-outils { display: none !important; }
+            .feuille {
+                width: auto; min-height: 0; margin: 0; padding: 0;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="barre-outils">
+        <button type="button" class="bouton-imprimer" onclick="window.print()">Imprimer</button>
+        <a class="bouton-autre" href="{% url 'ticket_vente' vente.pk %}">Version ticket 80 mm</a>
+        <a class="bouton-autre" href="{% url 'detail_vente' vente.pk %}">Retour à la vente</a>
+    </div>
+
+    <div class="feuille">
+        <div class="entete">
+            <div>
+                <div class="societe">LogiStock SA</div>
+                <div class="sous-titre">Gestion de stock et de ventes</div>
+            </div>
+            <div class="titre-facture">
+                <div class="mot">FACTURE</div>
+                <div class="numero">N° {{ vente.reference }}</div>
+                <div>Date : {{ vente.date_vente|date:"d/m/Y H:i" }}</div>
+            </div>
+        </div>
+
+        <div class="infos">
+            <div class="bloc">
+                <div class="etiquette">Client</div>
+                <div class="gras">{{ vente.client }}</div>
+                {% if vente.client.telephone %}<div>Tél : {{ vente.client.telephone }}</div>{% endif %}
+                {% if vente.client.adresse %}<div>{{ vente.client.adresse }}</div>{% endif %}
+            </div>
+            <div class="bloc">
+                <div class="etiquette">Paiement</div>
+                <div class="gras">{% if vente.mode_paiement == "credit" %}À crédit{% else %}Au comptant{% endif %}</div>
+                <div>Vendeur : {{ vente.utilisateur.nom }} {{ vente.utilisateur.prenom|default:"" }}</div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Désignation</th>
+                    <th class="centre">Quantité</th>
+                    <th class="droite">Prix unitaire</th>
+                    <th class="droite">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in lignes %}
+                <tr>
+                    <td>{{ l.produit.designation }} <span style="color:#6B7280;">({{ l.produit.code }})</span></td>
+                    <td class="centre">{{ l.quantite }}</td>
+                    <td class="droite">{{ l.prix|fcfa }}</td>
+                    <td class="droite">{{ l.sous_total|fcfa }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="totaux">
+            <div class="ligne"><span>Sous-total</span><span>{{ sous_total|fcfa }}</span></div>
+            <div class="ligne"><span>Remise</span><span>- {{ vente.remise|fcfa }}</span></div>
+            <div class="ligne total"><span>TOTAL</span><span>{{ vente.montant_total|fcfa }}</span></div>
+        </div>
+
+        <div class="pied">
+            Merci de votre confiance. - LogiStock SA - Facture {{ vente.reference }}
+        </div>
+    </div>
+</body>
+</html>

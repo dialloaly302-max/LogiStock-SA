@@ -1,0 +1,7 @@
+<div class="marque">LogiStock SA</div>
+<nav class="d-flex flex-column">
+    {% for e in menu %}
+        <a class="menu-lien {% if request.resolver_match.url_name == e.nom %}actif{% endif %}"
+           href="{{ e.url }}">{{ e.texte }}</a>
+    {% endfor %}
+</nav>

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block titre %}Accès refusé{% endblock %}
+
+{% block contenu %}
+<div class="carte text-center py-5">
+    <h1 class="h3 mb-3">Accès refusé</h1>
+    <div class="alert alert-warning d-inline-block mb-4">
+        Vous n'avez pas le droit d'ouvrir cette page avec votre rôle.
+    </div>
+    <div>
+        <a class="btn btn-primary" href="{% url 'accueil' %}">Retour à l'accueil</a>
+    </div>
+</div>
+{% endblock %}

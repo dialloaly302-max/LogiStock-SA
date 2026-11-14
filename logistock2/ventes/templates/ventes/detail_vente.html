@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load logistock_filtres %}
+
+{% block titre %}Vente {{ vente.reference }}{% endblock %}
+
+{% block contenu %}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h3 mb-2">Vente {{ vente.reference }}</h1>
+        <div class="d-flex flex-wrap gap-2">
+            {% if vente.statut == "validee" %}
+                <span class="badge text-bg-success fs-6">Validée</span>
+            {% else %}
+                <span class="badge text-bg-danger fs-6">Annulée</span>
+            {% endif %}
+            {% if vente.mode_paiement == "credit" %}
+                <span class="badge text-bg-warning fs-6">Crédit</span>
+            {% else %}
+                <span class="badge text-bg-secondary fs-6">Comptant</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'liste_ventes' %}">Retour à la liste</a>
+        {% if vente.statut == "validee" %}
+            <a class="btn btn-outline-primary" href="{% url 'facture_vente' vente.pk %}" target="_blank">Facture A4</a>
+            <a class="btn btn-outline-primary" href="{% url 'ticket_vente' vente.pk %}" target="_blank">Ticket 80 mm</a>
+        {% endif %}
+               {% if peut_gerer %}
+            {% if vente.statut == "validee" %}
+                <a class="btn btn-danger" href="{% url 'annuler_vente' vente.pk %}">Annuler la vente</a>
+            {% endif %}
+            <a class="btn btn-primary" href="{% url 'nouvelle_vente' %}">+ Nouvelle vente</a>
+        {% endif %}    </div>
+</div>
+
+{% if vente.statut != "validee" %}
+<div class="alert alert-danger">
+    <strong>Vente annulée.</strong>
+       {% if vente.date_annulation %}Le {{ vente.date_annulation|date:"d/m/Y H:i" }}{% if vente.utilisateur_annulation %} par {{ vente.utilisateur_annulation.nom }} {{ vente.utilisateur_annulation.prenom|default:"" }}{% endif %}.{% endif %}
+    {% if vente.motif_annulation %}Motif : {{ vente.motif_annulation }}{% endif %}
+</div>
+{% endif %}
+
+<div class="carte mb-4">
+    <div class="row g-3">
+        <div class="col-12 col-md-3">
+            <div class="text-muted">Date</div>
+            <div class="fw-semibold">{{ vente.date_vente|date:"d/m/Y H:i" }}</div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="text-muted">Client</div>
+            <div class="fw-semibold">
+                <a href="{% url 'fiche_client' vente.client.pk %}" class="text-decoration-none">{{ vente.client }}</a>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="text-muted">Vendeur</div>
+            <div class="fw-semibold">{{ vente.utilisateur.nom }} {{ vente.utilisateur.prenom|default:"" }}</div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="text-muted">Mode de paiement</div>
+            <div class="fw-semibold">{% if vente.mode_paiement == "credit" %}À crédit{% else %}Au comptant{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="carte p-0 mb-4">
+    <div class="table-responsive">
+        <table class="table table-striped tableau mb-0">
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th class="text-center">Quantité</th>
+                    <th class="text-end">Prix unitaire</th>
+                    <th class="text-end">Sous-total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in lignes %}
+                <tr>
+                    <td>{{ l.produit.code }} - {{ l.produit.designation }}</td>
+                    <td class="text-center">{{ l.quantite }}</td>
+                    <td class="text-end text-nowrap">{{ l.prix|fcfa }}</td>
+                    <td class="text-end text-nowrap">{{ l.sous_total|fcfa }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center py-4">Aucune ligne.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="carte ms-auto" style="max-width: 360px;">
+    <div class="d-flex justify-content-between mb-2">
+        <span>Sous-total</span>
+        <span class="text-nowrap">{{ sous_total|fcfa }}</span>
+    </div>
+    <div class="d-flex justify-content-between mb-2">
+        <span>Remise</span>
+        <span class="text-nowrap">- {{ vente.remise|fcfa }}</span>
+    </div>
+    <hr>
+    <div class="d-flex justify-content-between fs-5 fw-bold">
+        <span>Total</span>
+        <span class="text-nowrap">{{ vente.montant_total|fcfa }}</span>
+    </div>
+</div>
+{% endblock %}

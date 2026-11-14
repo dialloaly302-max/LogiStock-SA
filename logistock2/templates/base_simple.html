@@ -1,0 +1,23 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block titre %}LogiStock SA{% endblock %} | LogiStock SA</title>
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/logistock.css' %}">
+</head>
+<body>
+<main class="container py-4" style="max-width: 520px;">
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{% if message.level_tag == 'error' %}danger{% else %}{{ message.level_tag }}{% endif %}"
+             role="alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% block contenu %}{% endblock %}
+</main>
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

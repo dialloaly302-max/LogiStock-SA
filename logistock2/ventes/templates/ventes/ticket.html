@@ -1,0 +1,83 @@
+{% load logistock_filtres %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ticket {{ vente.reference }} | LogiStock SA</title>
+    <style>
+        @page { size: 80mm auto; margin: 3mm; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; background: #e5e7eb; color: #000;
+            font-family: "Courier New", Courier, monospace; font-size: 10pt;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        }
+
+        .barre-outils {
+            position: sticky; top: 0; z-index: 10; display: flex;
+            flex-wrap: wrap; gap: 10px; padding: 10px 15px; background: #1E3A5F;
+        }
+        .barre-outils button, .barre-outils a {
+            padding: 9px 18px; border: 0; border-radius: 8px; cursor: pointer;
+            font-family: Arial, Helvetica, sans-serif; font-size: 11pt;
+            font-weight: bold; text-decoration: none;
+        }
+        .bouton-imprimer { background: #16A34A; color: #fff; }
+        .bouton-autre { background: #fff; color: #1E3A5F; }
+
+        /* ---- Le ticket : 80 mm de large ---- */
+        .ticket {
+            width: 80mm; margin: 10px auto; padding: 4mm;
+            background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
+        }
+        .centre { text-align: center; }
+        .societe { font-size: 14pt; font-weight: bold; }
+        .trait { border-top: 1px dashed #000; margin: 6px 0; }
+        .ligne { display: flex; justify-content: space-between; gap: 6px; }
+        .produit { font-weight: bold; margin-top: 4px; word-break: break-word; }
+        .total { font-size: 12pt; font-weight: bold; }
+
+        @media print {
+            body { background: #fff; }
+            .barre-outils { display: none !important; }
+            .ticket { width: 74mm; margin: 0; padding: 0; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="barre-outils">
+        <button type="button" class="bouton-imprimer" onclick="window.print()">Imprimer</button>
+        <a class="bouton-autre" href="{% url 'facture_vente' vente.pk %}">Version facture A4</a>
+        <a class="bouton-autre" href="{% url 'detail_vente' vente.pk %}">Retour à la vente</a>
+    </div>
+
+    <div class="ticket">
+        <div class="centre">
+            <div class="societe">LogiStock SA</div>
+            <div>Ticket {{ vente.reference }}</div>
+            <div>{{ vente.date_vente|date:"d/m/Y H:i" }}</div>
+        </div>
+        <div class="trait"></div>
+        <div>Client : {{ vente.client }}</div>
+        <div>Vendeur : {{ vente.utilisateur.nom }} {{ vente.utilisateur.prenom|default:"" }}</div>
+        <div>Paiement : {% if vente.mode_paiement == "credit" %}À crédit{% else %}Au comptant{% endif %}</div>
+        <div class="trait"></div>
+
+        {% for l in lignes %}
+            <div class="produit">{{ l.produit.designation }}</div>
+            <div class="ligne">
+                <span>{{ l.quantite }} x {{ l.prix|fcfa }}</span>
+                <span>{{ l.sous_total|fcfa }}</span>
+            </div>
+        {% endfor %}
+
+        <div class="trait"></div>
+        <div class="ligne"><span>Sous-total</span><span>{{ sous_total|fcfa }}</span></div>
+        <div class="ligne"><span>Remise</span><span>- {{ vente.remise|fcfa }}</span></div>
+        <div class="trait"></div>
+        <div class="ligne total"><span>TOTAL</span><span>{{ vente.montant_total|fcfa }}</span></div>
+        <div class="trait"></div>
+        <div class="centre">Merci de votre confiance !</div>
+    </div>
+</body>
+</html>

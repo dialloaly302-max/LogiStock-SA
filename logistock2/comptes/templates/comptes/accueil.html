@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load logistock_filtres %}
+
+{% block titre %}Accueil{% endblock %}
+
+{% block style %}
+<style>
+    .bandeau {
+        background: linear-gradient(135deg, var(--couleur-barre) 0%, var(--couleur-principale) 100%);
+        color: #fff;
+        border-radius: var(--rayon);
+        padding: 2rem 1.5rem;
+        box-shadow: var(--ombre);
+    }
+    .bandeau h1 { font-size: 1.9rem; font-weight: 700; margin-bottom: .25rem; }
+</style>
+{% endblock %}
+
+{% block contenu %}
+<div class="bandeau mb-4">
+    <h1>Bienvenue dans LogiStock SA</h1>
+    <p class="mb-0">Bonjour {{ user.prenom|default:user.nom }} ({{ user.role|role_lisible }}).</p>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3">
+    {% for c in cartes %}
+    <div class="col">
+        <a class="carte carte-stat h-100 {{ c.classe }}" href="{{ c.url }}">
+            <div class="libelle">{{ c.libelle }}</div>
+            <div class="valeur">{% if c.montant %}{{ c.valeur|fcfa }}{% else %}{{ c.valeur }}{% endif %}</div>
+            <div class="libelle">{{ c.detail }}</div>
+        </a>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="carte">Aucun indicateur disponible pour votre rôle.</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,199 @@
+/* ==========================================================
+   LogiStock SA : styles personnalisés
+   ========================================================== */
+
+/* 1. COULEURS : change ici, tout le site suit */
+:root {
+  --couleur-barre: #14532D;       /* bleu nuit : barre latérale */
+  --couleur-principale: #2563EB;  /* bleu : boutons, liens */
+  --couleur-alerte: #F59E0B;      /* orange : alertes */
+  --couleur-succes: #16A34A;      /* vert : succès */
+  --couleur-danger: #DC2626;      /* rouge : danger */
+  --couleur-fond: #F3F4F6;        /* fond des pages */
+  --couleur-texte: #1F2937;
+  --largeur-barre: 320px;
+  --rayon: 30px;
+  --ombre: 0 2px 8px rgba(0, 0, 0, .08);
+}
+
+/* 2. BASE */
+body {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 1.05rem;
+  background: var(--couleur-fond);
+  color: var(--couleur-texte);
+}
+a { color: var(--couleur-principale); }
+
+/* 3. STRUCTURE */
+.application { display: flex; min-height: 100vh; }
+.contenu-principal { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.page { width: 100%; max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+@media (max-width: 575.98px) { .page { padding: 1rem; } }
+
+/* 4. BARRE LATÉRALE */
+.barre-laterale {
+  --bs-offcanvas-bg: var(--couleur-barre);
+  --bs-offcanvas-color: #fff;
+  --bs-offcanvas-width: var(--largeur-barre);
+  background: var(--couleur-barre);
+  color: #fff;
+  flex-direction: column;
+  padding: 1rem;
+}
+.barre-bureau {
+  flex: 0 0 var(--largeur-barre);
+  width: var(--largeur-barre);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.marque { font-size: 1.35rem; font-weight: 700; padding: .5rem .75rem 1.25rem; }
+.menu-lien {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  padding: .8rem 1rem;
+  margin-bottom: .25rem;
+  color: rgba(255, 255, 255, .85);
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 500;
+}
+.menu-lien:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.menu-lien.actif { background: var(--couleur-principale); color: #fff; }
+
+/* 5. BARRE DU HAUT */
+.barre-haute {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .75rem 1.25rem;
+  background: #fff;
+  box-shadow: var(--ombre);
+}
+.utilisateur-info { margin-left: auto; display: flex; align-items: center; gap: .75rem; }
+.utilisateur-texte { text-align: right; line-height: 1.2; }
+.utilisateur-nom { font-weight: 600; }
+.utilisateur-role { font-size: .85rem; color: #6B7280; }
+
+/* 6. CARTES */
+.carte, .card {
+  background: #fff;
+  border: 0;
+  border-radius: var(--rayon);
+  box-shadow: var(--ombre);
+}
+.carte { padding: 1.25rem; }
+
+.carte-stat {
+  display: block;
+  padding: 1.25rem;
+  color: inherit;
+  text-decoration: none;
+  border-left: 6px solid var(--couleur-principale);
+  transition: transform .15s, box-shadow .15s;
+}
+.carte-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0, 0, 0, .12); color: inherit; }
+.carte-stat .libelle { color: #6B7280; font-weight: 500; }
+.carte-stat .valeur { font-size: 1.9rem; font-weight: 700; line-height: 1.15; }
+.carte-stat.succes { border-left-color: var(--couleur-succes); }
+.carte-stat.alerte { border-left-color: var(--couleur-alerte); }
+.carte-stat.danger { border-left-color: var(--couleur-danger); }
+
+/* 7. BOUTONS (grands, lisibles) */
+.btn { border-radius: 10px; font-weight: 600; padding: .6rem 1.25rem; font-size: 1.02rem; }
+.btn-primary {
+  --bs-btn-bg: var(--couleur-principale);
+  --bs-btn-border-color: var(--couleur-principale);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--couleur-principale) 85%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--couleur-principale) 85%, black);
+  --bs-btn-active-bg: color-mix(in srgb, var(--couleur-principale) 75%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--couleur-principale) 75%, black);
+}
+.btn-success {
+  --bs-btn-bg: var(--couleur-succes);
+  --bs-btn-border-color: var(--couleur-succes);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--couleur-succes) 85%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--couleur-succes) 85%, black);
+  --bs-btn-active-bg: color-mix(in srgb, var(--couleur-succes) 75%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--couleur-succes) 75%, black);
+}
+.btn-danger {
+  --bs-btn-bg: var(--couleur-danger);
+  --bs-btn-border-color: var(--couleur-danger);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--couleur-danger) 85%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--couleur-danger) 85%, black);
+  --bs-btn-active-bg: color-mix(in srgb, var(--couleur-danger) 75%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--couleur-danger) 75%, black);
+}
+.btn-warning {
+  --bs-btn-color: #1F2937;
+  --bs-btn-bg: var(--couleur-alerte);
+  --bs-btn-border-color: var(--couleur-alerte);
+  --bs-btn-hover-color: #1F2937;
+  --bs-btn-hover-bg: color-mix(in srgb, var(--couleur-alerte) 85%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--couleur-alerte) 85%, black);
+}
+
+/* 8. MESSAGES */
+.alert { border: 0; border-left: 6px solid; border-radius: 10px; box-shadow: var(--ombre); font-weight: 500; }
+.alert-success {
+  background: color-mix(in srgb, var(--couleur-succes) 14%, white);
+  color: color-mix(in srgb, var(--couleur-succes) 45%, black);
+  border-left-color: var(--couleur-succes);
+}
+.alert-danger {
+  background: color-mix(in srgb, var(--couleur-danger) 12%, white);
+  color: color-mix(in srgb, var(--couleur-danger) 50%, black);
+  border-left-color: var(--couleur-danger);
+}
+.alert-warning {
+  background: color-mix(in srgb, var(--couleur-alerte) 18%, white);
+  color: color-mix(in srgb, var(--couleur-alerte) 40%, black);
+  border-left-color: var(--couleur-alerte);
+}
+
+/* 9. TABLEAUX */
+.tableau thead th {
+  background: var(--couleur-barre);
+  color: #fff;
+  font-weight: 600;
+  border: 0;
+  white-space: nowrap;
+}
+.tableau tbody tr:nth-child(even) { background: #F9FAFB; }
+.tableau tbody tr:hover { background: #EEF2FF; }
+.tableau td, .tableau th { padding: .8rem 1rem; vertical-align: middle; }
+.page-link { color: var(--couleur-principale); }
+.page-item.active .page-link { background: var(--couleur-principale); border-color: var(--couleur-principale); color: #fff; }
+
+/* 10. FORMULAIRES */
+.form-label, label { font-weight: 600; margin-bottom: .3rem; }
+.form-control, .form-select { padding: .65rem .9rem; font-size: 1rem; border-radius: 10px; }
+.form-control:focus, .form-select:focus {
+  border-color: var(--couleur-principale);
+  box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--couleur-principale) 25%, transparent);
+}
+.errorlist { list-style: none; padding: 0; margin: .25rem 0 0; color: var(--couleur-danger); font-size: .92rem; font-weight: 500; }
+
+/* 11. PAGE DE CONNEXION */
+.carte-connexion { max-width: 420px; margin: 8vh auto; }
+.tableau { --bs-table-bg: #fff; --bs-table-striped-bg: #F3F6FB; --bs-table-hover-bg: #E3ECFF; }
+
+/* 12. PASTILLES ET BOUTON DECONNEXION : suivent les couleurs du haut */
+.text-bg-success { background-color: var(--couleur-succes) !important; }
+.text-bg-danger { background-color: var(--couleur-danger) !important; }
+.text-bg-warning { background-color: var(--couleur-alerte) !important; color: #1F2937 !important; }
+.btn-outline-danger {
+  --bs-btn-color: var(--couleur-danger);
+  --bs-btn-border-color: var(--couleur-danger);
+  --bs-btn-hover-bg: var(--couleur-danger);
+  --bs-btn-hover-border-color: var(--couleur-danger);
+  --bs-btn-active-bg: var(--couleur-danger);
+  --bs-btn-active-border-color: var(--couleur-danger);
+}

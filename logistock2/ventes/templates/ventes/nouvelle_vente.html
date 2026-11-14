@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block titre %}Nouvelle vente{% endblock %}
+
+{% block contenu %}
+<h1 class="h3 mb-3">Nouvelle vente</h1>
+
+<form method="post" id="form-vente"
+      data-admin="{% if est_admin %}1{% else %}0{% endif %}">
+    {% csrf_token %}
+
+    <div class="carte mb-3">
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <label for="client" class="form-label">Client</label>
+                <select name="client" id="client" class="form-select" required>
+                    <option value="">Choisir un client</option>
+                    {% for c in clients %}
+                        <option value="{{ c.pk }}"
+                            {% if saisie.client == c.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ c }}{% if c.telephone %} - {{ c.telephone }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <div id="info-client" class="small text-muted mt-1"></div>
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="form-label d-block">Mode de paiement</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="mode"
+                           id="mode-comptant" value="comptant"
+                           {% if saisie.mode != "credit" %}checked{% endif %}>
+                    <label class="form-check-label" for="mode-comptant">Comptant</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="mode"
+                           id="mode-credit" value="credit"
+                           {% if saisie.mode == "credit" %}checked{% endif %}>
+                    <label class="form-check-label" for="mode-credit">Crédit</label>
+                </div>
+                <div id="info-credit" class="small mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="carte p-0 mb-3">
+        <div class="table-responsive">
+            <table class="table tableau mb-0">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th class="text-center">Stock disponible</th>
+                        <th class="text-end">Prix unitaire</th>
+                        <th>Quantité</th>
+                        <th class="text-end">Sous-total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="lignes"></tbody>
+            </table>
+        </div>
+        <div class="p-3">
+            <button type="button" id="ajouter" class="btn btn-outline-primary">+ Ajouter un produit</button>
+            <span class="text-muted small ms-2">Le prix vient du produit : il n'est pas modifiable.</span>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-6 ms-lg-auto">
+            <div class="carte">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Sous-total</span>
+                    <span id="sous-total" class="text-nowrap">0&nbsp;FCFA</span>
+                </div>
+                <div class="mb-2">
+                    <label for="remise" class="form-label mb-1">Remise (montant en FCFA)</label>
+                    <input type="number" name="remise" id="remise" min="0" step="1"
+                           value="{{ saisie.remise }}" class="form-control">
+                    <div id="info-remise" class="small text-muted mt-1"></div>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between fs-4 fw-bold mb-3">
+                    <span>Total</span>
+                    <span id="total" class="text-nowrap">0&nbsp;FCFA</span>
+                </div>
+
+                {% if est_admin %}
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="autoriser" id="autoriser"
+                           {% if saisie.autoriser %}checked{% endif %}>
+                    <label class="form-check-label" for="autoriser">
+                        Autoriser le dépassement (plafond de crédit ou client en retard).
+                        Réservé à l'administrateur.
+                    </label>
+                </div>
+                {% endif %}
+
+                <div class="d-flex gap-2">
+                    <button type="submit" id="valider" class="btn btn-success btn-lg flex-fill">Valider la vente</button>
+                    <a class="btn btn-outline-secondary btn-lg" href="{% url 'liste_ventes' %}">Annuler</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{{ produits_js|json_script:"donnees-produits" }}
+{{ clients_js|json_script:"donnees-clients" }}
+{{ saisie.lignes|json_script:"lignes-saisies" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    "use strict";
+
+    var produits = JSON.parse(document.getElementById("donnees-produits").textContent);
+    var clients = JSON.parse(document.getElementById("donnees-clients").textContent);
+    var saisies = JSON.parse(document.getElementById("lignes-saisies").textContent);
+
+    var formulaire = document.getElementById("form-vente");
+    var estAdmin = formulaire.dataset.admin === "1";
+    var corps = document.getElementById("lignes");
+    var champClient = document.getElementById("client");
+    var champRemise = document.getElementById("remise");
+
+    var parId = {};
+    produits.forEach(function (p) { parId[p.id] = p; });
+
+    // 1250000 devient « 1 250 000 FCFA »
+    function fcfa(n) {
+        var signe = n < 0 ? "-" : "";
+        var texte = String(Math.abs(Math.round(n)));
+        return signe + texte.replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0") + "\u00a0FCFA";
+    }
+
+    function cellule(contenu, classe) {
+        var td = document.createElement("td");
+        if (classe) { td.className = classe; }
+        td.appendChild(contenu);
+        return td;
+    }
+
+    // Recalcule tout ce qui s'affiche en bas de l'écran
+    function recalculer() {
+        var sous = 0;
+        Array.prototype.forEach.call(corps.children, function (tr) {
+            sous += Number(tr.dataset.sous || 0);
+        });
+        var remise = parseInt(champRemise.value, 10);
+        if (isNaN(remise) || remise < 0) { remise = 0; }
+        var total = sous - remise;
+
+        document.getElementById("sous-total").textContent = fcfa(sous);
+        document.getElementById("total").textContent = fcfa(total);
+
+        var infoRemise = document.getElementById("info-remise");
+        if (remise > sous) {
+            infoRemise.textContent = "La remise dépasse le sous-total.";
+            infoRemise.className = "small text-danger fw-semibold mt-1";
+        } else if (!estAdmin) {
+            var maximum = Math.floor(sous * 10 / 100);
+            infoRemise.textContent = "Remise maximum autorisée (10 %) : " + fcfa(maximum);
+            infoRemise.className = "small mt-1 " + (remise > maximum ? "text-danger fw-semibold" : "text-muted");
+        } else {
+            infoRemise.textContent = "";
+        }
+
+        var client = clients[champClient.value];
+        var infoClient = document.getElementById("info-client");
+        var infoCredit = document.getElementById("info-credit");
+        infoCredit.textContent = "";
+        if (!client) {
+            infoClient.textContent = "";
+            return;
+        }
+        infoClient.textContent = "Solde actuel : " + fcfa(client.solde) +
+            " | Plafond de crédit : " + fcfa(client.plafond);
+
+        if (document.getElementById("mode-credit").checked) {
+            var apres = client.solde + total;
+            var texte = "Solde après cette vente : " + fcfa(apres) + ".";
+            var alerte = false;
+            if (apres > client.plafond) {
+                texte += " Cela dépasse le plafond de crédit.";
+                alerte = true;
+            }
+            if (client.retard) {
+                texte += " Client en retard de plus de 30 jours.";
+                alerte = true;
+            }
+            infoCredit.textContent = texte;
+            infoCredit.className = "small mt-2 " + (alerte ? "text-danger fw-semibold" : "text-muted");
+        }
+    }
+
+    // Ajoute une ligne (produit, quantité) au tableau
+    function ajouterLigne(produitId, quantite) {
+        var tr = document.createElement("tr");
+
+        var select = document.createElement("select");
+        select.name = "produit";
+        select.className = "form-select";
+        select.style.minWidth = "230px";
+        var vide = document.createElement("option");
+        vide.value = "";
+        vide.textContent = "Choisir un produit";
+        select.appendChild(vide);
+        produits.forEach(function (p) {
+            var option = document.createElement("option");
+            option.value = p.id;
+            option.textContent = p.code + " - " + p.designation +
+                (p.stock <= 0 ? " (rupture)" : "");
+            if (String(p.id) === String(produitId)) { option.selected = true; }
+            select.appendChild(option);
+        });
+
+        var stock = document.createElement("span");
+        var prix = document.createElement("span");
+        prix.className = "text-nowrap";
+        var sousTotal = document.createElement("span");
+        sousTotal.className = "fw-semibold text-nowrap";
+
+        var champQuantite = document.createElement("input");
+        champQuantite.type = "number";
+        champQuantite.name = "quantite";
+        champQuantite.min = "1";
+        champQuantite.step = "1";
+        champQuantite.className = "form-control";
+        champQuantite.style.maxWidth = "120px";
+        champQuantite.value = quantite || "1";
+        var avertissement = document.createElement("div");
+        avertissement.className = "text-danger small";
+        var celluleQuantite = document.createElement("td");
+        celluleQuantite.appendChild(champQuantite);
+        celluleQuantite.appendChild(avertissement);
+
+        var retirer = document.createElement("button");
+        retirer.type = "button";
+        retirer.className = "btn btn-sm btn-outline-danger";
+        retirer.textContent = "Retirer";
+
+        function mettreAJour() {
+            var p = parId[select.value];
+            var q = parseInt(champQuantite.value, 10);
+            if (isNaN(q) || q < 0) { q = 0; }
+            if (!p) {
+                stock.textContent = "-";
+                stock.className = "";
+                prix.textContent = "-";
+                sousTotal.textContent = "-";
+                avertissement.textContent = "";
+                champQuantite.classList.remove("is-invalid");
+                tr.dataset.sous = "0";
+            } else {
+                stock.textContent = p.stock;
+                stock.className = "badge " + (p.stock <= 0 ? "text-bg-danger" : "text-bg-success");
+                prix.textContent = fcfa(p.prix);
+                sousTotal.textContent = fcfa(q * p.prix);
+                var depasse = q > p.stock;
+                champQuantite.classList.toggle("is-invalid", depasse);
+                avertissement.textContent = depasse ? "Plus que le stock disponible" : "";
+                tr.dataset.sous = String(q * p.prix);
+            }
+            recalculer();
+        }
+
+        select.addEventListener("change", mettreAJour);
+        champQuantite.addEventListener("input", mettreAJour);
+        retirer.addEventListener("click", function () {
+            if (corps.children.length > 1) {
+                corps.removeChild(tr);
+            } else {
+                select.value = "";
+                champQuantite.value = "1";
+                mettreAJour();
+            }
+            recalculer();
+        });
+
+        tr.appendChild(cellule(select));
+        tr.appendChild(cellule(stock, "text-center"));
+        tr.appendChild(cellule(prix, "text-end"));
+        tr.appendChild(celluleQuantite);
+        tr.appendChild(cellule(sousTotal, "text-end"));
+        tr.appendChild(cellule(retirer, "text-end"));
+        corps.appendChild(tr);
+        mettreAJour();
+    }
+
+    document.getElementById("ajouter").addEventListener("click", function () {
+        ajouterLigne("", "1");
+    });
+    champRemise.addEventListener("input", recalculer);
+    champClient.addEventListener("change", recalculer);
+    document.getElementById("mode-comptant").addEventListener("change", recalculer);
+    document.getElementById("mode-credit").addEventListener("change", recalculer);
+
+       // La touche Entrée ne valide jamais la vente par accident
+    formulaire.addEventListener("keydown", function (evenement) {
+        if (evenement.key === "Enter" && evenement.target.tagName !== "BUTTON") {
+            evenement.preventDefault();
+        }
+    });
+
+    // Confirmation avant d'enregistrer, puis un seul clic possible
+    formulaire.addEventListener("submit", function (evenement) {
+        var total = document.getElementById("total").textContent;
+        var message = "Valider cette vente ?\nTotal : " + total +
+            "\nUne vente validée ne peut pas être supprimée.";
+        if (!window.confirm(message)) {
+            evenement.preventDefault();
+            return;
+        }
+        document.getElementById("valider").disabled = true;
+    });
+    saisies.forEach(function (ligne) {
+        ajouterLigne(ligne.produit, ligne.quantite);
+    });
+    recalculer();
+})();
+</script>
+{% endblock %}

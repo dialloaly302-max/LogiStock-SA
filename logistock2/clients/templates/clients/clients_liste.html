@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load logistock_filtres %}
+
+{% block titre %}Clients{% endblock %}
+
+{% block contenu %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Clients</h1>
+    {% if peut_gerer %}
+        <a class="btn btn-primary" href="{% url 'creer_client' %}">+ Ajouter un client</a>
+    {% endif %}
+</div>
+
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-12 col-md-5">
+            <input type="search" name="q" value="{{ q }}" class="form-control"
+                   placeholder="Rechercher par nom, prénom ou téléphone">
+        </div>
+        <div class="col-12 col-md-4">
+            <select name="etat" class="form-select">
+                <option value="actifs" {% if etat == "actifs" %}selected{% endif %}>Clients actifs</option>
+                <option value="archives" {% if etat == "archives" %}selected{% endif %}>Clients archivés</option>
+                <option value="tous" {% if etat == "tous" %}selected{% endif %}>Tous les clients</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button class="btn btn-primary flex-fill" type="submit">Filtrer</button>
+            {% if q or etat != "actifs" %}
+                <a class="btn btn-outline-secondary" href="{% url 'liste_clients' %}">Effacer</a>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+<p class="text-muted mb-2">{{ page.paginator.count }} client(s)</p>
+
+<div class="carte p-0">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover tableau mb-0">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Téléphone</th>
+                    <th class="text-end">Plafond de crédit</th>
+                    <th class="text-end">Solde</th>
+                    <th>Statut</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in lignes %}
+                <tr>
+                    <td>
+                        <a href="{% url 'fiche_client' l.client.pk %}"
+                           class="fw-semibold text-decoration-none">{{ l.client }}</a>
+                        {% if not l.client.est_actif %}
+                            <span class="badge text-bg-secondary">Archivé</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ l.client.telephone|default:"-" }}</td>
+                    <td class="text-end text-nowrap">{{ l.client.plafond_credit|fcfa }}</td>
+                    <td class="text-end text-nowrap fw-bold">{{ l.solde|fcfa }}</td>
+                    <td>
+                        {% if l.statut == "debiteur" %}
+                            <span class="badge text-bg-warning">Débiteur</span>
+                        {% else %}
+                            <span class="badge text-bg-success">Bon payeur</span>
+                        {% endif %}
+                        {% if l.retard %}
+                            <span class="badge text-bg-danger">En retard</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary"
+                           href="{% url 'fiche_client' l.client.pk %}">Voir la fiche</a>
+                        {% if peut_gerer %}
+                            <a class="btn btn-sm btn-primary"
+                               href="{% url 'modifier_client' l.client.pk %}">Modifier</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-4">Aucun client trouvé.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include "pagination.html" %}
+{% endblock %}

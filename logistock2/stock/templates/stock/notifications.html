@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block titre %}Notifications du stock{% endblock %}
+
+{% block contenu %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Notifications du stock</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'liste_stock' %}">Retour au stock</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-lg-6">
+        <div class="carte h-100" style="border-left: 6px solid var(--couleur-succes);">
+            <h2 class="h5">Dernières entrées</h2>
+            {% for m in dernieres_entrees %}
+                <div class="py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <strong>+{{ m.quantite }}</strong> {{ m.produit.designation }}
+                    <div class="text-muted small">
+                        {{ m.date_mouvement|date:"d/m/Y H:i" }} ·
+                        {{ m.utilisateur.nom }} {{ m.utilisateur.prenom|default:"" }}
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted mb-0">Aucune entrée.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="carte h-100" style="border-left: 6px solid var(--couleur-alerte);">
+            <h2 class="h5">Dernières sorties</h2>
+            {% for m in dernieres_sorties %}
+                <div class="py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <strong>−{{ m.quantite }}</strong> {{ m.produit.designation }}
+                    <div class="text-muted small">
+                        {{ m.date_mouvement|date:"d/m/Y H:i" }} ·
+                        {{ m.utilisateur.nom }} {{ m.utilisateur.prenom|default:"" }}
+                        {% if m.motif %}· {{ m.motif }}{% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted mb-0">Aucune sortie.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<h2 class="h5 mb-2">Historique des mouvements</h2>
+
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-12 col-md-5">
+            <input type="search" name="q" value="{{ q }}" class="form-control"
+                   placeholder="Rechercher par code ou désignation">
+        </div>
+        <div class="col-12 col-md-4">
+            <select name="type" class="form-select">
+                <option value="">Entrées et sorties</option>
+                <option value="entree" {% if type_choisi == "entree" %}selected{% endif %}>Entrées seulement</option>
+                <option value="sortie" {% if type_choisi == "sortie" %}selected{% endif %}>Sorties seulement</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button class="btn btn-primary flex-fill" type="submit">Filtrer</button>
+            {% if q or type_choisi %}
+                <a class="btn btn-outline-secondary" href="{% url 'notifications_stock' %}">Effacer</a>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+<p class="text-muted mb-2">{{ page.paginator.count }} mouvement(s)</p>
+
+<div class="carte p-0">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover tableau mb-0">
+            <thead>
+                <tr>
+                    <th>Date et heure</th>
+                    <th>Type</th>
+                    <th>Produit</th>
+                    <th class="text-center">Quantité</th>
+                    <th class="text-center">Stock après</th>
+                    <th>Motif</th>
+                    <th>Utilisateur</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in page %}
+                <tr>
+                    <td class="text-nowrap">{{ m.date_mouvement|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if m.type_mouvement == "entree" %}
+                            <span class="badge text-bg-success">Entrée</span>
+                        {% else %}
+                            <span class="badge text-bg-warning">Sortie</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ m.produit.code }} - {{ m.produit.designation }}</td>
+                    <td class="text-center fw-bold">{{ m.quantite }}</td>
+                    <td class="text-center">{{ m.quantite_restante }}</td>
+                    <td>{{ m.motif|default:"-" }}</td>
+                    <td>{{ m.utilisateur.nom }} {{ m.utilisateur.prenom|default:"" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center py-4">Aucun mouvement trouvé.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include "pagination.html" %}
+{% endblock %}
