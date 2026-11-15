@@ -8,4 +8,5 @@ urlpatterns = [
     path("", include("stock.urls")),
     path("", include("clients.urls")),
     path("", include("ventes.urls")),
+    path("", include("tableau_bord.urls")),
 ]

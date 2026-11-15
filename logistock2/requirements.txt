@@ -1,0 +1,12 @@
+﻿asgiref==3.13.0
+charset-normalizer==3.5.2
+Django==5.2.19
+et_xmlfile==2.0.0
+gunicorn==27.0.1
+mysqlclient==2.3.0
+openpyxl==3.1.5
+pillow==13.0.0
+python-dotenv==1.2.4
+reportlab==5.1.0
+sqlparse==0.6.1
+tzdata==2026.6

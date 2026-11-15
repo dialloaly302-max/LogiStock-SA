@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load logistock_filtres %}
+
+{% block titre %}Tableau de bord{% endblock %}
+
+{% block contenu %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Tableau de bord</h1>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-success"
+           href="{% url 'export_excel' %}?debut={{ debut_texte }}&amp;fin={{ fin_texte }}">Exporter en Excel</a>
+    </div>  
+        <a class="btn btn-danger"
+           href="{% url 'export_pdf' %}?debut={{ debut_texte }}&amp;fin={{ fin_texte }}">Exporter en PDF</a>  
+
+
+<!-- ===== Les 4 cartes ===== -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-4">
+    <div class="col">
+        <a class="carte carte-stat h-100 succes" href="{% url 'liste_ventes' %}">
+            <div class="libelle">Ventes du jour</div>
+            <div class="valeur">{{ jour.total|fcfa }}</div>
+            <div class="libelle">{{ jour.nombre }} vente(s) validée(s) aujourd'hui</div>
+        </a>
+    </div>
+    <div class="col">
+        <a class="carte carte-stat h-100" href="{% url 'liste_ventes' %}">
+            <div class="libelle">Ventes du mois</div>
+            <div class="valeur">{{ mois.total|fcfa }}</div>
+            <div class="libelle">{{ mois.nombre }} vente(s) validée(s) ce mois-ci</div>
+        </a>
+    </div>
+    <div class="col">
+        <a class="carte carte-stat h-100 {% if nb_critiques %}danger{% else %}succes{% endif %}" href="{% url 'liste_stock' %}">
+            <div class="libelle">Produits en stock critique</div>
+            <div class="valeur">{{ nb_critiques }}</div>
+            <div class="libelle">stock inférieur ou égal au seuil minimal</div>
+        </a>
+    </div>
+    <div class="col">
+        <a class="carte carte-stat h-100 {% if credits.total %}alerte{% else %}succes{% endif %}" href="{% url 'liste_clients' %}">
+            <div class="libelle">Crédits à recouvrer</div>
+            <div class="valeur">{{ credits.total|fcfa }}</div>
+            <div class="libelle">{{ credits.nombre }} client(s) avec une dette</div>
+        </a>
+    </div>
+</div>
+
+<!-- ===== Chiffre d'affaires sur une période ===== -->
+<div class="carte mb-4">
+    <h2 class="h5 mb-3">Chiffre d'affaires sur une période</h2>
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-sm-4 col-md-3">
+            <label for="debut" class="form-label mb-1">Du</label>
+            <input type="date" id="debut" name="debut" value="{{ debut_texte }}" class="form-control" required>
+        </div>
+        <div class="col-12 col-sm-4 col-md-3">
+            <label for="fin" class="form-label mb-1">Au</label>
+            <input type="date" id="fin" name="fin" value="{{ fin_texte }}" class="form-control" required>
+        </div>
+        <div class="col-12 col-sm-4 col-md-6 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Afficher</button>
+            <a class="btn btn-outline-secondary" href="{% url 'tableau_bord' %}">Ce mois-ci</a>
+        </div>
+    </form>
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <div class="text-muted">Chiffre d'affaires du {{ debut|date:"d/m/Y" }} au {{ fin|date:"d/m/Y" }}</div>
+            <div class="fs-2 fw-bold">{{ periode.total|fcfa }}</div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="text-muted">Ventes validées sur la période</div>
+            <div class="fs-2 fw-bold">{{ periode.nombre }}</div>
+        </div>
+    </div>
+    <div class="small text-muted mt-2">Les ventes annulées sont exclues. Les deux dates sont incluses.</div>
+</div>
+
+<!-- ===== Les 5 produits les plus vendus ===== -->
+<div class="carte mb-4">
+    <h2 class="h5 mb-3">Les 5 produits les plus vendus (quantités)</h2>
+    {% if top5 %}
+        <div style="position: relative; height: 320px;">
+            <canvas id="graphique-top5"></canvas>
+        </div>
+    {% else %}
+        <p class="text-muted mb-0">Aucune vente validée sur cette période.</p>
+    {% endif %}
+</div>
+
+<h2 class="h5 mb-2">Classement complet des produits vendus</h2>
+<div class="carte p-0 mb-4">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover tableau mb-0">
+            <thead>
+                <tr>
+                    <th class="text-center">Rang</th>
+                    <th>Code</th>
+                    <th>Désignation</th>
+                    <th class="text-center">Quantité vendue</th>
+                    <th class="text-center">Nombre de ventes</th>
+                    <th class="text-end">Chiffre d'affaires</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in classement %}
+                <tr>
+                    <td class="text-center fw-bold">{{ forloop.counter }}</td>
+                    <td><strong>{{ l.code }}</strong></td>
+                    <td>{{ l.designation }}</td>
+                    <td class="text-center fw-bold">{{ l.quantite }}</td>
+                    <td class="text-center">{{ l.nombre_ventes }}</td>
+                    <td class="text-end text-nowrap">{{ l.ca|fcfa }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-4">Aucune vente validée sur cette période.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="small text-muted">Les montants par produit sont calculés avant remise (prix × quantité).</p>
+
+<!-- ===== Produits en stock critique ===== -->
+<h2 class="h5 mb-2">Produits en stock critique</h2>
+<div class="carte p-0 mb-4">
+    <div class="table-responsive">
+        <table class="table tableau mb-0">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Désignation</th>
+                    <th>Catégorie</th>
+                    <th class="text-center">Stock restant</th>
+                    <th class="text-center">Seuil minimal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in critiques %}
+                <tr class="table-danger">
+                    <td><strong>{{ p.code }}</strong></td>
+                    <td>{{ p.designation }}</td>
+                    <td>{{ p.categorie.nom_categorie }}</td>
+                    <td class="text-center"><span class="badge text-bg-danger">{{ p.stock }}</span></td>
+                    <td class="text-center">{{ p.seuil_minimal }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-4 text-success fw-semibold">Aucun produit en stock critique.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ graphique|json_script:"donnees-graphique" }}
+<script>
+(function () {
+    "use strict";
+    var donnees = JSON.parse(document.getElementById("donnees-graphique").textContent);
+    var canvas = document.getElementById("graphique-top5");
+    if (!canvas || donnees.labels.length === 0) { return; }
+
+    // La couleur vient du CSS : si tu changes --couleur-principale, le graphique suit.
+    var couleur = getComputedStyle(document.documentElement)
+        .getPropertyValue("--couleur-principale").trim() || "#2563EB";
+
+    new Chart(canvas, {
+        type: "bar",
+        data: {
+            labels: donnees.labels,
+            datasets: [{
+                label: "Quantité vendue",
+                data: donnees.quantites,
+                backgroundColor: couleur,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

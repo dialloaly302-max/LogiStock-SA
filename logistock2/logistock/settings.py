@@ -14,7 +14,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = [
     h.strip()
-    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    for h in os.getenv("ALLOWED_HOSTS", "localhost,192.168.236.169").split(",")
     if h.strip()
 ]
 
@@ -111,3 +111,16 @@ DUREE_BLOCAGE_MINUTES = 15
 
 # Tests : créer aussi les tables non gérées dans la base temporaire
 TEST_RUNNER = "logistock.test_runner.TestRunnerTablesExistantes"
+# --- Production : actif seulement si DJANGO_ENV=production (ton PC n'est pas touché) ---
+EN_PRODUCTION = os.getenv("DJANGO_ENV") == "production"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+if EN_PRODUCTION:
+    DEBUG = False
+    SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+    ALLOWED_HOSTS = os.environ["DJANGO_ALLOWED_HOSTS"].split(",")
+    CSRF_TRUSTED_ORIGINS = ["https://" + h for h in ALLOWED_HOSTS]
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
