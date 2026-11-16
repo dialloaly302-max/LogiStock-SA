@@ -74,7 +74,7 @@ DB\_PORT=3306
 
 \## Import de la base de données
 
-Le fichier de sauvegarde `.sql` n'est pas sur GitHub (il contient des données) : il est fourni séparément.
+Le fichier de sauvegarde `.sql` il est sur GitHub (il contient des données) : il est fourni séparément.
 
 ```powershell
 
