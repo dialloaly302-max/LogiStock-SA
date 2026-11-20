@@ -1,0 +1,5 @@
+com\logistock\LogiStockServer$JsonParser.class
+com\logistock\LogiStockServer$SessionData.class
+com\logistock\LogiStockServer$UserInfo.class
+com\logistock\LogiStockServer.class
+com\logistock\LogiStockServer$ApiException.class

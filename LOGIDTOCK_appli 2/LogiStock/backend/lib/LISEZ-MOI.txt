@@ -1,0 +1,1 @@
+Optionnel si vous utilisez Maven : placez ici mysql-connector-j-x.x.x.jar si vous compilez sans Maven.
